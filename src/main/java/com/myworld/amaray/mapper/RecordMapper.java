@@ -108,7 +108,7 @@ public class RecordMapper {
                 List<RefDto> power = cells.get("power").refs();
                 extras.put("currentPower", power.isEmpty() ? null : power.get(power.size() - 1));
             }
-            if (detailed && type == RefType.RACE) {
+            if (type == RefType.RACE) {
                 extras.put("origin", raceOrigin.describe(e.getId()));
             }
 
