@@ -268,4 +268,20 @@ public class CellService {
         for (Link l : links.findByTargetTypeAndTargetId(type, id)) store.markPending(l.getOwnerType(), l.getOwnerId());
         for (Link l : links.findByRefTypeAndRefId(type, id)) store.markPending(l.getOwnerType(), l.getOwnerId());
     }
+
+    /** У расы изменилось имя, родитель или причина: цепочка и формула всех потомков в Sheets устарели. */
+    public void touchRaceDescendants(Long raceId) {
+        Deque<Long> stack = new ArrayDeque<>(List.of(raceId));
+        Set<Long> seen = new HashSet<>();
+        while (!stack.isEmpty()) {
+            Long cur = stack.pop();
+            if (!seen.add(cur)) continue;
+            for (Link l : links.findByRefTypeAndRefId(RefType.RACE, cur)) {
+                if (l.getOwnerType() == RefType.RACE && "origin".equals(l.getCol())) {
+                    store.markPending(RefType.RACE, l.getOwnerId());
+                    stack.push(l.getOwnerId());
+                }
+            }
+        }
+    }
 }
