@@ -119,6 +119,7 @@ public class CellService {
 
         links.deleteByOwnerTypeAndOwnerIdAndCol(type, id, spec.field());
         links.saveAll(result);
+        if (type == RefType.RACE && spec.field().equals("origin")) touchRaceDescendants(id);
         saveText(type, id, spec.field(), cell.text());
     }
 
@@ -245,6 +246,7 @@ public class CellService {
 
     /** Перед удалением записи: убирает ссылки на неё, владельцы получают PENDING. Сами записи не удаляются. */
     public void purge(RefType type, Long id) {
+        if (type == RefType.RACE) touchRaceDescendants(id);
         for (Link l : links.findByTargetTypeAndTargetId(type, id)) {
             store.markPending(l.getOwnerType(), l.getOwnerId());
             links.delete(l);
@@ -267,11 +269,18 @@ public class CellService {
     public void touchReferencers(RefType type, Long id) {
         for (Link l : links.findByTargetTypeAndTargetId(type, id)) store.markPending(l.getOwnerType(), l.getOwnerId());
         for (Link l : links.findByRefTypeAndRefId(type, id)) store.markPending(l.getOwnerType(), l.getOwnerId());
+        if (type == RefType.RACE) touchRaceDescendants(id);
+        if (type == RefType.TAG) {
+            for (Link l : links.findByTargetTypeAndTargetId(RefType.TAG, id)) {
+                if (l.getOwnerType() == RefType.RACE && "origin".equals(l.getCol())) touchRaceDescendants(l.getOwnerId());
+            }
+        }
     }
 
-    /** У расы изменилось имя, родитель или причина: цепочка и формула всех потомков в Sheets устарели. */
+    /** Происхождение расы собирается по цепочке: правка звена меняет ячейку у всех потомков. */
     public void touchRaceDescendants(Long raceId) {
-        Deque<Long> stack = new ArrayDeque<>(List.of(raceId));
+        Deque<Long> stack = new ArrayDeque<>();
+        stack.push(raceId);
         Set<Long> seen = new HashSet<>();
         while (!stack.isEmpty()) {
             Long cur = stack.pop();

@@ -152,6 +152,7 @@ public class TagService {
 
         for (Link l : links.findByTargetTypeAndTargetId(RefType.TAG, id)) {
             store.markPending(l.getOwnerType(), l.getOwnerId());
+            if (l.getOwnerType() == RefType.RACE && "origin".equals(l.getCol())) cellService.touchRaceDescendants(l.getOwnerId());
             boolean duplicate = newTarget != null && links
                     .findByOwnerTypeAndOwnerIdAndColOrderByPos(l.getOwnerType(), l.getOwnerId(), l.getCol()).stream()
                     .anyMatch(o -> o.getTargetType() == RefType.TAG && newTarget.equals(o.getTargetId()));
