@@ -90,7 +90,7 @@ public class TagService {
         if (name == null || name.isEmpty()) throw new BadRequestException("Название тега обязательно");
         if (r.category() == null) throw new BadRequestException("Не указан справочник (category)");
 
-        Tag parent = r.parentId() == null ? null : requireFolderParent(r.parentId(), r.category());
+        Tag parent = r.parentId() == null ? null : requireParent(r.parentId(), r.category());
         checkSiblingName(r.category(), parent == null ? null : parent.getId(), name, null);
 
         boolean folder = Boolean.TRUE.equals(r.isFolder());
@@ -125,7 +125,8 @@ public class TagService {
     /** Перенос в другую папку и/или смена места среди соседей (перетаскивание). */
     public Tag move(Long id, TagMoveRequest r) {
         Tag t = get(id);
-        Tag newParent = r.parentId() == null ? null : requireFolderParent(r.parentId(), t.getCategory());
+        Tag oldParent = t.getParent();
+        Tag newParent = r.parentId() == null ? null : requireParent(r.parentId(), t.getCategory());
         if (newParent != null && descendantIds(id).contains(newParent.getId())) {
             throw new BadRequestException("Нельзя перенести папку внутрь самой себя");
         }
@@ -138,6 +139,7 @@ public class TagService {
         t.setParent(newParent);
         for (int i = 0; i < sibs.size(); i++) sibs.get(i).setSortOrder(i);
         tags.saveAll(sibs);
+        collapseIfEmpty(oldParent, id);
         return t;
     }
 
@@ -230,5 +232,26 @@ public class TagService {
             cur = cur.getParent();
         }
         return null;
+    }
+
+    /** Родитель: если это обычный тег, он становится папкой-типом (остаётся выбираемым). */
+    private Tag requireParent(Long parentId, TagCategory category) {
+        Tag p = get(parentId);
+        if (p.getCategory() != category) throw new BadRequestException("Папка из другого справочника");
+        if (!p.isFolder()) {
+            p.setFolder(true);
+            p.setSelectable(true);
+            tags.save(p);
+        }
+        return p;
+    }
+
+    /** Папка-тип, из которой вынули всё, снова становится обычным тегом. Папка-класс остаётся папкой. */
+    private void collapseIfEmpty(Tag p, Long excludeId) {
+        if (p != null && p.isFolder() && p.isSelectable()
+                && siblings(p.getCategory(), p.getId(), excludeId).isEmpty()) {
+            p.setFolder(false);
+            tags.save(p);
+        }
     }
 }
