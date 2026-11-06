@@ -125,11 +125,11 @@ public class TagService {
     /** Перенос в другую папку и/или смена места среди соседей (перетаскивание). */
     public Tag move(Long id, TagMoveRequest r) {
         Tag t = get(id);
-        Tag oldParent = t.getParent();
-        Tag newParent = r.parentId() == null ? null : requireParent(r.parentId(), t.getCategory());
-        if (newParent != null && descendantIds(id).contains(newParent.getId())) {
+        if (r.parentId() != null && descendantIds(id).contains(r.parentId())) {
             throw new BadRequestException("Нельзя перенести папку внутрь самой себя");
         }
+        Tag oldParent = t.getParent();
+        Tag newParent = r.parentId() == null ? null : requireParent(r.parentId(), t.getCategory());
         Long newParentId = newParent == null ? null : newParent.getId();
         checkSiblingName(t.getCategory(), newParentId, t.getName(), id);
 
@@ -139,29 +139,23 @@ public class TagService {
         t.setParent(newParent);
         for (int i = 0; i < sibs.size(); i++) sibs.get(i).setSortOrder(i);
         tags.saveAll(sibs);
-        collapseIfEmpty(oldParent, id);
+
+        if (oldParent != null && !oldParent.getId().equals(newParentId)) collapseIfEmpty(oldParent, id);
         return t;
     }
 
     /**
-     * Удаление тега или папки. Дети папки поднимаются на уровень выше. Ссылки на папку переходят на её родителя,
-     * если он может быть значением, иначе убираются. Ссылки на обычный тег убираются. Записи не удаляются.
+     * Удаление тега или папки. Значение пропадает из всех ячеек (в паре «тег + ссылка» остаётся ссылка),
+     * дети поднимаются на уровень выше. Записи не удаляются. Если родитель остался без детей, он снова обычный тег.
      */
     public void delete(Long id) {
         Tag t = get(id);
         Tag parent = t.getParent();
-        Long newTarget = (t.isFolder() && parent != null && parent.isSelectable()) ? parent.getId() : null;
 
         for (Link l : links.findByTargetTypeAndTargetId(RefType.TAG, id)) {
             store.markPending(l.getOwnerType(), l.getOwnerId());
-            if (l.getOwnerType() == RefType.RACE && "origin".equals(l.getCol())) cellService.touchRaceDescendants(l.getOwnerId());
-            boolean duplicate = newTarget != null && links
-                    .findByOwnerTypeAndOwnerIdAndColOrderByPos(l.getOwnerType(), l.getOwnerId(), l.getCol()).stream()
-                    .anyMatch(o -> o.getTargetType() == RefType.TAG && newTarget.equals(o.getTargetId()));
-            if (newTarget != null && !duplicate) {
-                l.setTargetId(newTarget);
-                links.save(l);
-            } else if (l.getRefId() != null) { // пара: остаётся ссылка, пропадает только тег
+            // если ты уже добавил touchRaceDescendants, оставь здесь и его вызов
+            if (l.getRefId() != null) { // пара: остаётся ссылка, пропадает только тег
                 l.setTargetType(null);
                 l.setTargetId(null);
                 links.save(l);
@@ -180,6 +174,7 @@ public class TagService {
             }
         }
         tags.delete(t);
+        collapseIfEmpty(parent, id);
     }
 
     // ───────────────────────── Вспомогательное ─────────────────────────
