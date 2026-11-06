@@ -179,13 +179,6 @@ public class TagService {
 
     // ───────────────────────── Вспомогательное ─────────────────────────
 
-    private Tag requireFolderParent(Long parentId, TagCategory category) {
-        Tag p = get(parentId);
-        if (!p.isFolder()) throw new BadRequestException("'" + p.getName() + "' не папка, в неё нельзя вкладывать");
-        if (p.getCategory() != category) throw new BadRequestException("Папка из другого справочника");
-        return p;
-    }
-
     private List<Tag> siblings(TagCategory category, Long parentId, Long excludeId) {
         return tags.findByCategoryOrderBySortOrderAscIdAsc(category).stream()
                 .filter(x -> Objects.equals(x.getParent() == null ? null : x.getParent().getId(), parentId))
