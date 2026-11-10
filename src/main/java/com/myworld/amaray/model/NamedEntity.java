@@ -35,6 +35,7 @@ public abstract class NamedEntity extends BaseEntity {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("name", name);
         m.put("description", description);
+        m.put("image", getImage());
         putExtra(m);
         return m;
     }
@@ -43,6 +44,7 @@ public abstract class NamedEntity extends BaseEntity {
     public void applyFields(Map<String, Object> f) {
         if (f.containsKey("name")) name = Fields.str(f.get("name"));
         if (f.containsKey("description")) description = Fields.text(f.get("description"));
+        if (f.containsKey("image")) setImage(Fields.imageUrl(f.get("image"), "image"));
         readExtra(f);
     }
 

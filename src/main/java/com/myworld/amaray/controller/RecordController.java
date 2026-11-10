@@ -29,6 +29,14 @@ public class RecordController {
 
     private final RecordService service;
     private final RecordMapper mapper;
+    public record GalleryRequest(List<String> urls) {}
+
+    @PutMapping("/{entity}/{id}/gallery")
+    public ResponseEntity<List<String>> gallery(@PathVariable String entity, @PathVariable Long id,
+                                                @RequestBody GalleryRequest request) {
+        List<String> urls = request.urls() == null ? List.of() : request.urls();
+        return ResponseEntity.ok(service.setGallery(RefType.fromPath(entity), id, urls));
+    }
 
     @GetMapping("/{entity}")
     public ResponseEntity<List<RecordDto>> list(@PathVariable String entity, @RequestParam Map<String, String> params) {

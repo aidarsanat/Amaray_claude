@@ -58,6 +58,7 @@ public class Characters extends BaseEntity {
         m.put("firstName", firstName);
         m.put("lastName", lastName);
         m.put("nickname", nickname);
+        m.put("image", getImage());
         m.put("birthYear", birthYear);
         m.put("deathYear", deathYear);
         m.put("age", age);
@@ -80,6 +81,7 @@ public class Characters extends BaseEntity {
         if (f.containsKey("firstName")) firstName = Fields.str(f.get("firstName"));
         if (f.containsKey("lastName")) lastName = Fields.str(f.get("lastName"));
         if (f.containsKey("nickname")) nickname = Fields.str(f.get("nickname"));
+        if (f.containsKey("image")) setImage(Fields.imageUrl(f.get("image"), "image"));
         if (f.containsKey("birthYear")) birthYear = Fields.integer(f.get("birthYear"), "birthYear");
         if (f.containsKey("deathYear")) deathYear = Fields.integer(f.get("deathYear"), "deathYear");
         if (f.containsKey("age")) age = Fields.integer(f.get("age"), "age");

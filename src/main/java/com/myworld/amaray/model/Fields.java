@@ -53,4 +53,13 @@ public final class Fields {
         if (o instanceof Map<?, ?> m) return (Map<String, Object>) m;
         throw new BadRequestException("Поле '" + name + "' должно быть объектом");
     }
+
+    public static String imageUrl(Object o, String name) {
+        String s = str(o);
+        if (s == null) return null;
+        if (!s.startsWith("/api/images/")) {
+            throw new BadRequestException("Поле '" + name + "' должно быть ссылкой на загруженную картинку");
+        }
+        return s;
+    }
 }

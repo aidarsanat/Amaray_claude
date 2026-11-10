@@ -20,6 +20,9 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private SyncState syncState = SyncState.PENDING;
 
+    @Column
+    private String image; // ссылка вида /api/images/<uuid>.png, null = без картинки
+
     /** Как запись называется в плашках и подсказках. */
     public abstract String displayName();
 

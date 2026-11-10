@@ -7,6 +7,7 @@ import com.myworld.amaray.exception.ConflictException;
 import com.myworld.amaray.model.*;
 import com.myworld.amaray.repository.LinkRepository;
 import com.myworld.amaray.repository.RecordStore;
+import com.myworld.amaray.repository.RecordImageRepository;
 import com.myworld.amaray.schema.ColumnSpec;
 import com.myworld.amaray.schema.Schema;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class RecordService {
     private final LinkRepository links;
     private final CellService cells;
     private final TagService tagService;
+    private final RecordImageRepository images;
 
     // ───────────────────────── Чтение ─────────────────────────
 
@@ -236,6 +238,27 @@ public class RecordService {
         BaseEntity e = store.require(type, id);
         e.setSyncState(SyncState.SYNCED);
         return e;
+    }
+
+    /** Заменяет галерею целиком. Порядок списка = порядок показа. */
+    public List<String> setGallery(RefType type, Long id, List<String> urls) {
+        store.require(type, id);
+        List<String> clean = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (String raw : urls) {
+            String u = Fields.imageUrl(raw, "gallery");
+            if (u != null && seen.add(u)) clean.add(u);
+        }
+        images.deleteByOwnerTypeAndOwnerId(type, id);
+        for (int i = 0; i < clean.size(); i++) {
+            RecordImage r = new RecordImage();
+            r.setOwnerType(type);
+            r.setOwnerId(id);
+            r.setUrl(clean.get(i));
+            r.setPos(i);
+            images.save(r);
+        }
+        return clean;
     }
 
     // ───────────────────────── Проверки ─────────────────────────

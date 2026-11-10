@@ -10,6 +10,7 @@ import com.myworld.amaray.model.*;
 import com.myworld.amaray.repository.CellTextRepository;
 import com.myworld.amaray.repository.LinkRepository;
 import com.myworld.amaray.repository.RecordStore;
+import com.myworld.amaray.repository.RecordImageRepository;
 import com.myworld.amaray.repository.TagRepository;
 import com.myworld.amaray.schema.ColumnKind;
 import com.myworld.amaray.schema.ColumnSpec;
@@ -30,6 +31,7 @@ public class CellService {
     private final CellTextRepository texts;
     private final TagRepository tags;
     private final RecordStore store;
+    private final RecordImageRepository images;
 
     // ───────────────────────── Запись ячеек ─────────────────────────
 
@@ -263,6 +265,7 @@ public class CellService {
         }
         links.deleteByOwnerTypeAndOwnerId(type, id);
         texts.deleteByOwnerTypeAndOwnerId(type, id);
+        images.deleteByOwnerTypeAndOwnerId(type, id);
     }
 
     /** Запись или тег переименован: везде, где он показан, данные в Sheets устарели. */

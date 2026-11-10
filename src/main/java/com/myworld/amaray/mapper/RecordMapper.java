@@ -6,6 +6,7 @@ import com.myworld.amaray.model.*;
 import com.myworld.amaray.repository.CellTextRepository;
 import com.myworld.amaray.repository.LinkRepository;
 import com.myworld.amaray.repository.RecordStore;
+import com.myworld.amaray.repository.RecordImageRepository;
 import com.myworld.amaray.repository.TagRepository;
 import com.myworld.amaray.schema.ColumnKind;
 import com.myworld.amaray.schema.ColumnSpec;
@@ -31,6 +32,7 @@ public class RecordMapper {
     private final TagRepository tags;
     private final RecordStore store;
     private final RaceOriginService raceOrigin;
+    private final RecordImageRepository images;
 
     public RecordDto toDto(RefType type, BaseEntity e, boolean detailed) {
         return toDtos(type, List.of(e), detailed).get(0);
@@ -110,6 +112,11 @@ public class RecordMapper {
             }
             if (type == RefType.RACE) {
                 extras.put("origin", raceOrigin.describe(e.getId()));
+            }
+
+            if (detailed) {
+                extras.put("gallery", images.findByOwnerTypeAndOwnerIdOrderByPos(type, e.getId())
+                        .stream().map(RecordImage::getUrl).toList());
             }
 
             out.add(new RecordDto(e.getId(), type, e.displayName(), e.getSyncState(),
