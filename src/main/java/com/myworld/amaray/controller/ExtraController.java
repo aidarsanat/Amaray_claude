@@ -1,5 +1,6 @@
 package com.myworld.amaray.controller;
 
+import com.myworld.amaray.dto.record.AgeAtEvent;
 import com.myworld.amaray.dto.record.RaceOriginDto;
 import com.myworld.amaray.dto.record.RecordDto;
 import com.myworld.amaray.mapper.RecordMapper;
@@ -25,7 +26,7 @@ public class ExtraController {
 
     // Сколько лет было персонажу на момент события (любому, не только участнику)
     @GetMapping("/events/{id}/character-age")
-    public ResponseEntity<Integer> characterAge(@PathVariable Long id, @RequestParam Long characterId) {
+    public ResponseEntity<AgeAtEvent> characterAge(@PathVariable Long id, @RequestParam Long characterId) {
         return ResponseEntity.ok(chronology.characterAgeAtEvent(id, characterId));
     }
 

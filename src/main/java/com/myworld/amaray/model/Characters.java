@@ -1,5 +1,7 @@
 package com.myworld.amaray.model;
 
+import com.myworld.amaray.exception.BadRequestException;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +26,9 @@ public class Characters extends BaseEntity {
 
     @Column
     private Integer birthYear; // точный год рождения, нужен для расчёта возраста на момент события
+
+    @Column
+    private Integer deathYear; // год смерти, null = жив или неизвестно
 
     @Column
     private Integer age;
@@ -54,6 +59,7 @@ public class Characters extends BaseEntity {
         m.put("lastName", lastName);
         m.put("nickname", nickname);
         m.put("birthYear", birthYear);
+        m.put("deathYear", deathYear);
         m.put("age", age);
         if (appearance == null) {
             m.put("appearance", null);
@@ -75,6 +81,7 @@ public class Characters extends BaseEntity {
         if (f.containsKey("lastName")) lastName = Fields.str(f.get("lastName"));
         if (f.containsKey("nickname")) nickname = Fields.str(f.get("nickname"));
         if (f.containsKey("birthYear")) birthYear = Fields.integer(f.get("birthYear"), "birthYear");
+        if (f.containsKey("deathYear")) deathYear = Fields.integer(f.get("deathYear"), "deathYear");
         if (f.containsKey("age")) age = Fields.integer(f.get("age"), "age");
         if (f.containsKey("appearance")) {
             Map<String, Object> a = Fields.map(f.get("appearance"), "appearance");
@@ -89,6 +96,9 @@ public class Characters extends BaseEntity {
                 if (a.containsKey("features")) ap.setFeatures(Fields.text(a.get("features")));
                 appearance = ap;
             }
+        }
+        if (birthYear != null && deathYear != null && deathYear < birthYear) {
+            throw new BadRequestException("Год смерти раньше года рождения");
         }
     }
 }

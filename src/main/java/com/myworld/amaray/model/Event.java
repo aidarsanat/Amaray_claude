@@ -1,5 +1,7 @@
 package com.myworld.amaray.model;
 
+import com.myworld.amaray.exception.BadRequestException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -31,5 +33,8 @@ public class Event extends NamedEntity {
     protected void readExtra(Map<String, Object> f) {
         if (f.containsKey("year")) eventYear = Fields.integer(f.get("year"), "year");
         if (f.containsKey("endYear")) eventEndYear = Fields.integer(f.get("endYear"), "endYear");
+        if (eventYear != null && eventEndYear != null && eventEndYear < eventYear) {
+            throw new BadRequestException("Конец события раньше начала");
+        }
     }
 }
