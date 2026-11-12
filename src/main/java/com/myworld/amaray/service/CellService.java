@@ -106,6 +106,9 @@ public class CellService {
                         l.setRefType(ref.type());
                         l.setRefId(ref.id());
                     }
+                    String key = (l.getTargetType() == null ? "-" : l.getTargetType() + ":" + l.getTargetId())
+                            + "|" + (l.getRefType() == null ? "-" : l.getRefType() + ":" + l.getRefId());
+                    if (!seen.add(key)) continue;
                     result.add(l);
                 }
             }
