@@ -154,7 +154,9 @@ public class TagService {
 
         for (Link l : links.findByTargetTypeAndTargetId(RefType.TAG, id)) {
             store.markPending(l.getOwnerType(), l.getOwnerId());
-            // если ты уже добавил touchRaceDescendants, оставь здесь и его вызов
+            if (l.getOwnerType() == RefType.RACE && "origin".equals(l.getCol())) {
+                cellService.touchRaceDescendants(l.getOwnerId()); // формула потомков изменилась
+            }
             if (l.getRefId() != null) { // пара: остаётся ссылка, пропадает только тег
                 l.setTargetType(null);
                 l.setTargetId(null);
