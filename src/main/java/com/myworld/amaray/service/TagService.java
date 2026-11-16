@@ -236,7 +236,7 @@ public class TagService {
         return p;
     }
 
-    /** Папка-тип, из которой вынули всё, снова становится обычным тегом. Папка-класс остаётся папкой. */
+    /** Папка-тип, из которой вынули всё, снова становится обычным тегом. Невыбираемая папка остаётся папкой. */
     private void collapseIfEmpty(Tag p, Long excludeId) {
         if (p != null && p.isFolder() && p.isSelectable()
                 && siblings(p.getCategory(), p.getId(), excludeId).isEmpty()) {

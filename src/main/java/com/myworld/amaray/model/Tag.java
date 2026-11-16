@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Тег или папка справочника. Три вида:
- * папка-класс (folder, не selectable), папка-тип (folder, selectable), тег (не folder).
+ * Тег или папка справочника.
+ * Папка может быть выбираемой (selectable) или только разделителем.
  */
 @Getter
 @Setter
