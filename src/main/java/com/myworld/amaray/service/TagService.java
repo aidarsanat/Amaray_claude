@@ -224,7 +224,7 @@ public class TagService {
         return null;
     }
 
-    /** Родитель: если это обычный тег, он становится папкой-типом (остаётся выбираемым). */
+    /** Родитель: если это обычный тег, он становится выбираемой папкой. */
     private Tag requireParent(Long parentId, TagCategory category) {
         Tag p = get(parentId);
         if (p.getCategory() != category) throw new BadRequestException("Папка из другого справочника");
@@ -236,7 +236,7 @@ public class TagService {
         return p;
     }
 
-    /** Папка-тип, из которой вынули всё, снова становится обычным тегом. Невыбираемая папка остаётся папкой. */
+    /** Выбираемая папка, из которой вынули всё, снова становится обычным тегом. Невыбираемая папка остаётся папкой. */
     private void collapseIfEmpty(Tag p, Long excludeId) {
         if (p != null && p.isFolder() && p.isSelectable()
                 && siblings(p.getCategory(), p.getId(), excludeId).isEmpty()) {
