@@ -63,7 +63,6 @@ public final class Schema {
                 refs("affiliation", false, FACTION),
                 tags("type", PLACE_TYPE, false, false)));
 
-        // Предметы: артефактность и качества ещё не продуманы, пока обычные теги
         COLUMNS.put(ITEM, List.of(
                 tags("type", ITEM_TYPE, false, false),
                 refs("owner", false, CHARACTER),
