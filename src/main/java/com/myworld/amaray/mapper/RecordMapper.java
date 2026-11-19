@@ -140,6 +140,7 @@ public class RecordMapper {
         for (Link l : all) {
             String key = l.getOwnerType() + ":" + l.getCol();
             if (hidden.contains(key)) continue;
+            if (l.getOwnerType() == type && l.getOwnerId().equals(id)) continue; // ссылка на себя (размножение)
             BaseEntity owner = store.find(l.getOwnerType(), l.getOwnerId());
             if (owner == null) continue;
             grouped.computeIfAbsent(key, k -> new ArrayList<>())

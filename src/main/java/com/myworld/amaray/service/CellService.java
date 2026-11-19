@@ -100,7 +100,8 @@ public class CellService {
                             throw new BadRequestException("Столбец '" + spec.field() + "' не принимает ссылки типа " + ref.type());
                         }
                         requireRecord(ref.type(), ref.id());
-                        if (ref.type() == type && ref.id().equals(id)) {
+                        // в «Размножении» раса может ссылаться на себя («Свои и чужие: Люди» у Людей)
+                        if (ref.type() == type && ref.id().equals(id) && !spec.field().equals("reproduction")) {
                             throw new BadRequestException("Запись не может ссылаться на саму себя");
                         }
                         l.setRefType(ref.type());
@@ -242,6 +243,7 @@ public class CellService {
         all.addAll(links.findByRefTypeAndRefId(type, id));
         List<UsageDto> out = new ArrayList<>();
         for (Link l : all) {
+            if (l.getOwnerType() == type && l.getOwnerId().equals(id)) continue; // ссылка на себя удалится вместе с записью
             BaseEntity owner = store.find(l.getOwnerType(), l.getOwnerId());
             if (owner == null) continue;
             out.add(new UsageDto(l.getOwnerType(), l.getOwnerId(), owner.displayName(), l.getCol()));

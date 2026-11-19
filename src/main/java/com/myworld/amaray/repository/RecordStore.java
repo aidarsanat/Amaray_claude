@@ -88,7 +88,10 @@ public class RecordStore {
         if (e != null) e.setSyncState(SyncState.PENDING);
     }
 
-    /** Есть ли запись с такими значениями полей (null означает IS NULL). excludeId исключает саму запись. */
+    /**
+     * Есть ли запись с такими значениями полей (null означает IS NULL). excludeId исключает саму запись.
+     * Строки сравниваются без учёта регистра: «Эльфы» и «эльфы» считаются одним именем.
+     */
     public boolean exists(RefType type, Map<String, Object> conds, Long excludeId) {
         StringBuilder q = new StringBuilder("select count(e) from " + classOf(type).getSimpleName() + " e where 1=1");
         Map<String, Object> params = new LinkedHashMap<>();
@@ -96,6 +99,10 @@ public class RecordStore {
         for (Map.Entry<String, Object> c : conds.entrySet()) {
             if (c.getValue() == null) {
                 q.append(" and e.").append(c.getKey()).append(" is null");
+            } else if (c.getValue() instanceof String s) {
+                String p = "p" + i++;
+                q.append(" and lower(e.").append(c.getKey()).append(") = lower(:").append(p).append(")");
+                params.put(p, s);
             } else {
                 String p = "p" + i++;
                 q.append(" and e.").append(c.getKey()).append(" = :").append(p);
