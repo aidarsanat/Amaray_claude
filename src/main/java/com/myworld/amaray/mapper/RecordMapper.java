@@ -11,8 +11,10 @@ import com.myworld.amaray.repository.TagRepository;
 import com.myworld.amaray.schema.ColumnKind;
 import com.myworld.amaray.schema.ColumnSpec;
 import com.myworld.amaray.schema.Schema;
+import com.myworld.amaray.service.ChronologyService;
 import com.myworld.amaray.service.RaceOriginService;
 import com.myworld.amaray.service.TagService;
+import com.myworld.amaray.service.WorldSettingsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +35,7 @@ public class RecordMapper {
     private final RecordStore store;
     private final RaceOriginService raceOrigin;
     private final RecordImageRepository images;
+    private final WorldSettingsService settings;
 
     public RecordDto toDto(RefType type, BaseEntity e, boolean detailed) {
         return toDtos(type, List.of(e), detailed).get(0);
@@ -43,6 +46,7 @@ public class RecordMapper {
         if (entities.isEmpty()) return List.of();
         List<Long> ids = entities.stream().map(BaseEntity::getId).toList();
         List<ColumnSpec> columns = Schema.columns(type);
+        Integer worldYear = type == RefType.CHARACTER ? settings.worldYear() : null; // один запрос на весь список
 
         Map<Long, List<Link>> own = new HashMap<>();
         for (Link l : links.findByOwnerTypeAndOwnerIdInOrderByPos(type, ids)) {
@@ -109,6 +113,7 @@ public class RecordMapper {
             if (type == RefType.CHARACTER) { // текущая сила = последнее значение прогресса
                 List<RefDto> power = cells.get("power").refs();
                 extras.put("currentPower", power.isEmpty() ? null : power.get(power.size() - 1));
+                extras.put("age", ChronologyService.ageAt((Characters) e, worldYear)); // по «текущему году мира»
             }
             if (type == RefType.RACE) {
                 extras.put("origin", raceOrigin.describe(e.getId()));

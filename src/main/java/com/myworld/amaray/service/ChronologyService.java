@@ -1,27 +1,25 @@
 package com.myworld.amaray.service;
 
-import com.myworld.amaray.dto.record.AgeAtEvent;
-import com.myworld.amaray.exception.BadRequestException;
+import com.myworld.amaray.dto.record.CharacterAge;
 import com.myworld.amaray.model.Characters;
-import com.myworld.amaray.repository.RecordStore;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-@Service
-@Transactional(readOnly = true)
-@RequiredArgsConstructor
-public class ChronologyService {
+/** Расчёт возраста персонажа по «текущему году мира». */
+public final class ChronologyService {
 
-    private final RecordStore store;
+    private ChronologyService() {}
 
-    /** Возраст на любой год. Пригодится и для плашки «текущий год мира». */
-    public static AgeAtEvent ageAt(Characters c, int year) {
-        if (c.getBirthYear() == null) throw new BadRequestException("У персонажа не указан год рождения");
-        if (year < c.getBirthYear()) return new AgeAtEvent(null, "NOT_BORN");
-        if (c.getDeathYear() != null && year > c.getDeathYear()) {
-            return new AgeAtEvent(c.getDeathYear() - c.getBirthYear(), "DEAD");
+    /**
+     * worldYear = null: год мира не задан, берётся ручной возраст.
+     * Без года рождения тоже берётся ручной возраст.
+     */
+    public static CharacterAge ageAt(Characters c, Integer worldYear) {
+        if (worldYear == null || c.getBirthYear() == null) {
+            return new CharacterAge(c.getAge(), "MANUAL");
         }
-        return new AgeAtEvent(year - c.getBirthYear(), "ALIVE");
+        if (worldYear < c.getBirthYear()) return new CharacterAge(null, "NOT_BORN");
+        if (c.getDeathYear() != null && worldYear > c.getDeathYear()) {
+            return new CharacterAge(c.getDeathYear() - c.getBirthYear(), "DEAD");
+        }
+        return new CharacterAge(worldYear - c.getBirthYear(), "ALIVE");
     }
 }

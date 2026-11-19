@@ -27,6 +27,7 @@ public class RecordService {
     private final CellService cells;
     private final TagService tagService;
     private final RecordImageRepository images;
+    private final WorldSettingsService settings;
 
     // ───────────────────────── Чтение ─────────────────────────
 
@@ -162,6 +163,13 @@ public class RecordService {
             items.forEach(e -> keys.put(e.getId(), e.getSyncState().name()));
         } else if (sortBy.equals("name")) {
             items.forEach(e -> keys.put(e.getId(), e.displayName()));
+        } else if (type == RefType.CHARACTER && sortBy.equals("age")) {
+            // вычисленный возраст; «не родился» и пустой возраст уходят в конец
+            Integer worldYear = settings.worldYear();
+            items.forEach(e -> {
+                Integer age = ChronologyService.ageAt((Characters) e, worldYear).age();
+                if (age != null) keys.put(e.getId(), age);
+            });
         } else if (items.get(0).toFields().containsKey(sortBy)) {
             items.forEach(e -> {
                 Object v = e.toFields().get(sortBy);
