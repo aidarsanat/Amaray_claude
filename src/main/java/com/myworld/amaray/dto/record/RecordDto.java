@@ -10,7 +10,7 @@ import java.util.Map;
 
 /**
  * Ответ для таблицы и страницы записи.
- * fields: простые поля. cells: ячейки со ссылками. extras: вычисляемое (currentPower, origin).
+ * fields: простые поля. cells: ячейки со ссылками. extras: вычисляемое (currentPower и age у персонажа, origin у расы).
  * backlinks заполняются только на странице записи.
  */
 public record RecordDto(Long id, RefType type, String name, SyncState syncState,
