@@ -110,9 +110,9 @@ public class RecordMapper {
             }
 
             Map<String, Object> extras = new LinkedHashMap<>();
-            if (type == RefType.CHARACTER) { // текущая сила = последнее значение прогресса
+            if (type == RefType.CHARACTER) { // текущая сила = первое значение прогресса
                 List<RefDto> power = cells.get("power").refs();
-                extras.put("currentPower", power.isEmpty() ? null : power.get(power.size() - 1));
+                extras.put("currentPower", power.isEmpty() ? null : power.get(0));
                 extras.put("age", ChronologyService.ageAt((Characters) e, worldYear)); // по «текущему году мира»
             }
             if (type == RefType.RACE) {

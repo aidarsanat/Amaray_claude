@@ -44,6 +44,7 @@ public class RecordController {
         PageResult<BaseEntity> page = service.list(type, ListQuery.from(params));
         return ResponseEntity.ok()
                 .header("X-Total-Count", String.valueOf(page.total()))
+                .header("X-Hidden-Count", String.valueOf(page.hidden()))
                 .body(mapper.toDtos(type, page.items(), false));
     }
 

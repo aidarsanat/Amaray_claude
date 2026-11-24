@@ -23,7 +23,7 @@ public final class Schema {
                 refs("race", false, RACE),
                 refs("role", false, ROLE),
                 tags("ageRange", AGE_RANGE, true, false),
-                tags("power", CHARACTER_POWER, false, true), // прогресс по порядку: A, A+, S-
+                tags("power", CHARACTER_POWER, false, true), // прогресс, первое значение = текущая сила: S-, A+, A
                 tags("gender", GENDER, true, false),
                 tags("appearanceRating", APPEARANCE_RATING, true, false)));
 

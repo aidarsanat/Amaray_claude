@@ -27,7 +27,7 @@ public class RecordService {
     private final CellService cells;
     private final TagService tagService;
     private final RecordImageRepository images;
-    private final WorldSettingsService settings;
+    private final RecordSorter sorter;
 
     // ───────────────────────── Чтение ─────────────────────────
 
@@ -80,7 +80,8 @@ public class RecordService {
             items.removeIf(e -> !matches(e, needle));
         }
 
-        sort(type, items, q.sortBy(), q.desc());
+        RecordSorter.Result sorted = sorter.sort(type, items, q.sortBy(), q.choice(), q.desc(), q.showHidden());
+        items = new ArrayList<>(sorted.items());
 
         long total = items.size();
         if (q.size() != null) {
@@ -89,7 +90,7 @@ public class RecordService {
             long to = Math.min(total, from + size);
             items = new ArrayList<>(items.subList((int) from, (int) to));
         }
-        return new PageResult<>(items, total);
+        return new PageResult<>(items, total, sorted.hidden());
     }
 
     private boolean matches(BaseEntity e, String needle) {
@@ -149,59 +150,6 @@ public class RecordService {
             throw new BadRequestException("Столбец '" + field + "' принимает несколько типов, укажите ТИП:id, например LAND:3");
         }
         return spec.targets().iterator().next();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void sort(RefType type, List<BaseEntity> items, String sortByParam, boolean desc) {
-        final String sortBy = (sortByParam == null || sortByParam.isBlank()) ? "name" : sortByParam;
-        if (items.isEmpty()) return;
-
-        Map<Long, Object> keys = new HashMap<>();
-        if (sortBy.equals("id")) {
-            items.forEach(e -> keys.put(e.getId(), e.getId()));
-        } else if (sortBy.equals("syncState")) {
-            items.forEach(e -> keys.put(e.getId(), e.getSyncState().name()));
-        } else if (sortBy.equals("name")) {
-            items.forEach(e -> keys.put(e.getId(), e.displayName()));
-        } else if (type == RefType.CHARACTER && sortBy.equals("age")) {
-            // вычисленный возраст; «не родился» и пустой возраст уходят в конец
-            Integer worldYear = settings.worldYear();
-            items.forEach(e -> {
-                Integer age = ChronologyService.ageAt((Characters) e, worldYear).age();
-                if (age != null) keys.put(e.getId(), age);
-            });
-        } else if (items.get(0).toFields().containsKey(sortBy)) {
-            items.forEach(e -> {
-                Object v = e.toFields().get(sortBy);
-                if (v instanceof Comparable) keys.put(e.getId(), v);
-            });
-        } else {
-            ColumnSpec spec = Schema.find(type, sortBy).orElseThrow(() ->
-                    new BadRequestException("Нельзя сортировать по '" + sortBy + "'"));
-            if (spec.kind() != com.myworld.amaray.schema.ColumnKind.TAGS) {
-                throw new BadRequestException("Сортировка по столбцу '" + sortBy + "' не поддерживается");
-            }
-            // по порядку справочника (S+ ... E-), у упорядоченных столбцов берётся последнее значение (текущая сила)
-            Map<Long, Integer> rank = tagService.ranks(spec.category());
-            for (Link l : links.findByOwnerTypeAndColOrderByPos(type, sortBy)) {
-                Integer r = l.getTargetType() == RefType.TAG ? rank.get(l.getTargetId()) : null;
-                if (r == null) continue;
-                if (spec.ordered()) keys.put(l.getOwnerId(), r);
-                else keys.putIfAbsent(l.getOwnerId(), r);
-            }
-        }
-
-        items.sort((x, y) -> {
-            Object a = keys.get(x.getId());
-            Object b = keys.get(y.getId());
-            if (a == null && b == null) return 0;
-            if (a == null) return 1; // пустые всегда в конце
-            if (b == null) return -1;
-            int r = (a instanceof String s && b instanceof String t)
-                    ? s.compareToIgnoreCase(t)
-                    : ((Comparable) a).compareTo(b);
-            return desc ? -r : r;
-        });
     }
 
     // ───────────────────────── Создание, обновление, удаление ─────────────────────────

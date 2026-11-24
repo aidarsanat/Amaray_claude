@@ -7,13 +7,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Параметры списка. Всё, что не search, sortBy, direction, page, size, считается фильтром по столбцу:
+ * Параметры списка. Всё, что не search, sortBy, choice, showHidden, direction, page, size, считается фильтром по столбцу:
  * ?race=1, ?status=5, ?lands=LAND:3 (тип нужен, если столбец принимает несколько типов).
+ * choice: что выбрано в сортировке с выбором (таблица, tag/ref у пары или id верхней папки).
+ * showHidden=true: записи, скрытые сортировкой с выбором, показываются в конце списка.
  */
-public record ListQuery(String search, String sortBy, boolean desc, Integer page, Integer size,
-                        Map<String, String> filters) {
+public record ListQuery(String search, String sortBy, String choice, boolean showHidden, boolean desc,
+                        Integer page, Integer size, Map<String, String> filters) {
 
-    private static final Set<String> RESERVED = Set.of("search", "sortBy", "direction", "page", "size");
+    private static final Set<String> RESERVED =
+            Set.of("search", "sortBy", "choice", "showHidden", "direction", "page", "size");
 
     public static ListQuery from(Map<String, String> params) {
         Map<String, String> filters = new LinkedHashMap<>();
@@ -25,6 +28,8 @@ public record ListQuery(String search, String sortBy, boolean desc, Integer page
         return new ListQuery(
                 params.get("search"),
                 params.get("sortBy"),
+                params.get("choice"),
+                "true".equalsIgnoreCase(params.get("showHidden")),
                 "desc".equalsIgnoreCase(params.get("direction")),
                 parseInt(params.get("page"), "page"),
                 parseInt(params.get("size"), "size"),
