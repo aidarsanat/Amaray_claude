@@ -14,7 +14,8 @@ public class TagMapper {
     public TagDto toDto(Tag t) {
         return new TagDto(t.getId(), t.getName(), t.getCategory(),
                 t.getParent() == null ? null : t.getParent().getId(),
-                t.isFolder(), t.isSelectable(), TagService.effectiveColor(t), t.getSortOrder());
+                t.isFolder(), t.isSelectable(), TagService.effectiveColor(t), t.getColor(),
+                t.getSortOrder());
     }
 
     /** Строит дерево из плоского списка одной категории (список уже отсортирован по sortOrder). */

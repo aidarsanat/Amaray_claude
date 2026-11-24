@@ -4,6 +4,7 @@ import com.myworld.amaray.dto.common.*;
 import com.myworld.amaray.exception.BadRequestException;
 import com.myworld.amaray.exception.ConflictException;
 import com.myworld.amaray.exception.NotFoundException;
+import com.myworld.amaray.model.Fields;
 import com.myworld.amaray.model.Link;
 import com.myworld.amaray.model.RefType;
 import com.myworld.amaray.model.Tag;
@@ -99,8 +100,9 @@ public class TagService {
         t.setCategory(r.category());
         t.setParent(parent);
         t.setFolder(folder);
-        t.setSelectable(!folder || Boolean.TRUE.equals(r.selectable()));
-        t.setColor(blankToNull(r.color()));
+        // Тег всегда выбираем. Папка: если не прислано явно, папка-тип невыбираема, папка-тег выбираема.
+        t.setSelectable(!folder || (r.selectable() != null ? r.selectable() : !r.category().isTypeDictionary()));
+        t.setColor(Fields.color(r.color(), "color")); // пусто = наследовать, иначе строго #RRGGBB
         t.setSortOrder(r.sortOrder() != null ? r.sortOrder()
                 : siblings(r.category(), parent == null ? null : parent.getId(), null).size());
         return tags.save(t);
@@ -117,7 +119,7 @@ public class TagService {
                 cellService.touchReferencers(RefType.TAG, id);
             }
         }
-        if (r.color() != null) t.setColor(blankToNull(r.color()));
+        if (r.color() != null) t.setColor(Fields.color(r.color(), "color")); // "" возвращает унаследованный цвет
         if (r.selectable() != null && t.isFolder()) t.setSelectable(r.selectable());
         return tags.save(t);
     }
@@ -194,10 +196,6 @@ public class TagService {
         if (taken) throw new ConflictException("В этой папке уже есть '" + name + "'");
     }
 
-    private static String blankToNull(String s) {
-        return s == null || s.isBlank() ? null : s.trim();
-    }
-
     public static Map<Long, List<Tag>> childrenMap(List<Tag> all) {
         Map<Long, List<Tag>> kids = new HashMap<>(); // ключ null = корень
         for (Tag t : all) {
@@ -224,13 +222,18 @@ public class TagService {
         return null;
     }
 
-    /** Родитель: если это обычный тег, он становится выбираемой папкой. */
+    /**
+     * Родитель: если это обычный тег, он становится папкой. Папка-тег выбираема.
+     * Папка-тип невыбираема, но если тег уже стоит в ячейках, он остаётся выбираемым,
+     * иначе эти записи нельзя было бы сохранить.
+     */
     private Tag requireParent(Long parentId, TagCategory category) {
         Tag p = get(parentId);
         if (p.getCategory() != category) throw new BadRequestException("Папка из другого справочника");
         if (!p.isFolder()) {
             p.setFolder(true);
-            p.setSelectable(true);
+            p.setSelectable(!category.isTypeDictionary()
+                    || !links.findByTargetTypeAndTargetId(RefType.TAG, p.getId()).isEmpty());
             tags.save(p);
         }
         return p;
