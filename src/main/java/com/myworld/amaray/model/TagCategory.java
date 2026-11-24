@@ -12,16 +12,4 @@ public enum TagCategory {
     ITEM_TYPE, ITEM_QUALITY,
     EVENT_TYPE,
     OTHER;
-
-    /**
-     * Справочник типа: его папки служат папками-типами для выбора записей своей таблицы в других столбцах
-     * (например, LAND_TYPE в Role → Земли). Такие папки создаются невыбираемыми.
-     */
-    public boolean isTypeDictionary() {
-        return switch (this) {
-            case FACTION_TYPE, ROLE_TYPE, RACE_TYPE, LAND_TYPE, SETTLEMENT_TYPE,
-                 PLACE_TYPE, ITEM_TYPE, EVENT_TYPE -> true;
-            default -> false;
-        };
-    }
 }
