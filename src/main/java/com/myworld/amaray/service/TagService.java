@@ -100,8 +100,8 @@ public class TagService {
         t.setCategory(r.category());
         t.setParent(parent);
         t.setFolder(folder);
-        // Тег всегда выбираем. Папка: если не прислано явно, папка-тип невыбираема, папка-тег выбираема.
-        t.setSelectable(!folder || (r.selectable() != null ? r.selectable() : !r.category().isTypeDictionary()));
+        // Тег всегда выбираем. Папка выбираема, если явно не прислано selectable: false.
+        t.setSelectable(!folder || !Boolean.FALSE.equals(r.selectable()));
         t.setColor(Fields.color(r.color(), "color")); // пусто = наследовать, иначе строго #RRGGBB
         t.setSortOrder(r.sortOrder() != null ? r.sortOrder()
                 : siblings(r.category(), parent == null ? null : parent.getId(), null).size());
@@ -222,18 +222,13 @@ public class TagService {
         return null;
     }
 
-    /**
-     * Родитель: если это обычный тег, он становится папкой. Папка-тег выбираема.
-     * Папка-тип невыбираема, но если тег уже стоит в ячейках, он остаётся выбираемым,
-     * иначе эти записи нельзя было бы сохранить.
-     */
+    /** Родитель: если это обычный тег, он становится выбираемой папкой. */
     private Tag requireParent(Long parentId, TagCategory category) {
         Tag p = get(parentId);
         if (p.getCategory() != category) throw new BadRequestException("Папка из другого справочника");
         if (!p.isFolder()) {
             p.setFolder(true);
-            p.setSelectable(!category.isTypeDictionary()
-                    || !links.findByTargetTypeAndTargetId(RefType.TAG, p.getId()).isEmpty());
+            p.setSelectable(true);
             tags.save(p);
         }
         return p;
